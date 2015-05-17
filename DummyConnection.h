@@ -25,8 +25,8 @@ public:
 	};
 
 	shared_ptr<Connection> create() {
-		shared_ptr<DummyConnection>conn(new DummyConnection());
-		return static_pointer_cast<Connection>(conn);
+        shared_ptr<DummyConnection>conn(new DummyConnection());
+        return static_pointer_cast<Connection>(conn);
 	};
 
 };

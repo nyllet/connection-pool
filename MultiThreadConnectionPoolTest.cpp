@@ -13,11 +13,10 @@ using std::chrono::milliseconds;
 
 class PoolDispatchedWithMultipleThreads: public Test {
 public:
-
     vector<shared_ptr<thread>> threads;
-	shared_ptr<DummyConnectionFactory> connection_factory;
-	shared_ptr<ConnectionPool<DummyConnection>> pool;
-	ConnectionPoolStats stat;
+    shared_ptr<DummyConnectionFactory> connection_factory;
+    shared_ptr<ConnectionPool<DummyConnection>> pool;
+    ConnectionPoolStats stat;
     condition_variable wasExecuted;
     mutex m;
     unsigned int count{0};
@@ -34,10 +33,10 @@ public:
         ASSERT_THAT(wasExecuted.wait_for(lock, time, [&] { return expectedCount == count; }), Eq(true));  
     } 
     
-	void SetUp() override {
-		connection_factory = shared_ptr<DummyConnectionFactory>(new DummyConnectionFactory());
-	 	pool = shared_ptr<ConnectionPool<DummyConnection>>(new ConnectionPool<DummyConnection>(200, connection_factory));	
-	}
+    void SetUp() override {
+        connection_factory = shared_ptr<DummyConnectionFactory>(new DummyConnectionFactory());
+        pool = shared_ptr<ConnectionPool<DummyConnection>>(new ConnectionPool<DummyConnection>(200, connection_factory));	
+    }
 
     void TearDown() override {
         for (auto& t: threads) t->join();
