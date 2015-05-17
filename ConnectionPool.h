@@ -79,13 +79,13 @@ class ConnectionPool {
             return static_pointer_cast<T>(conn);
         }
 
-    void release(shared_ptr<T> conn) {
-        lock_guard<mutex> lock(this->q_mutex);
-        this->pool.push_back(static_pointer_cast<Connection> (conn));
-        this->borrowed.erase(conn);
-    }
+        void release(shared_ptr<T> conn) {
+            lock_guard<mutex> lock(this->q_mutex);
+            this->pool.push_back(static_pointer_cast<Connection> (conn));
+            this->borrowed.erase(conn);
+        }
 
-    ~ConnectionPool() {};
+        ~ConnectionPool() {};
 
     private:
         size_t pool_size;
