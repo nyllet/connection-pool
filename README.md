@@ -1,3 +1,7 @@
+## Why did I fork this
+This was a nice project to begin my learning of C++ 11.
+
+
 ## connection-pool
 
 Generic, efficient, thread safe connection pooling for C++
