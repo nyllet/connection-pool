@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #include "ConnectionPool.h"
+#include "ConnectionPool.hpp"
 #include <string>
 #include "mysql_connection.h"
 #include <cppconn/driver.h>
@@ -21,12 +21,10 @@
 #include <cppconn/prepared_statement.h>
 #include <cppconn/statement.h>
 
-using boost::shared_ptr;
-
 namespace active911 {
 
 
-	class MySQLConnection : public Connection {
+	class MySQLConnection {
 
 	public:
 
@@ -44,7 +42,7 @@ namespace active911 {
 
 		};
 
-		boost::shared_ptr<sql::Connection> sql_connection;
+		std::shared_ptr<sql::Connection> sql_connection;
 		int a;
 	};
 
@@ -61,25 +59,25 @@ namespace active911 {
 		};
 
 		// Any exceptions thrown here should be caught elsewhere
-		shared_ptr<Connection> create() {
+           std::unique_ptr<MySQLConnection> create() {
 
 			// Get the driver
 			sql::Driver *driver;
 			driver=get_driver_instance();
 
 			// Create the connection
-			shared_ptr<MySQLConnection>conn(new MySQLConnection());
+                        std::unique_ptr<MySQLConnection> conn = std::make_unique<MySQLConnection>();
 
 			// Connect
-			conn->sql_connection=boost::shared_ptr<sql::Connection>(driver->connect(this->server,this->username,this->password));
+			conn->sql_connection=std::make_shared<sql::Connection>(driver->connect(this->server,this->username,this->password));
 
-			return boost::static_pointer_cast<Connection>(conn);
+			return conn;
 		};
 
 	private:
-		string server;
-		string username;
-		string password;
+           std::string server;
+           std::string username;
+           std::string password;
 	};
 
 

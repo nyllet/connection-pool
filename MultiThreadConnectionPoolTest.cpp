@@ -1,5 +1,5 @@
 #include "gmock/gmock.h" 
-#include "DummyConnection.h"
+#include "DummyConnection.hpp"
 
 #include <chrono>
 #include <condition_variable>
@@ -7,54 +7,50 @@
 #include <thread>
 #include <vector>
 
-using namespace testing;
-using namespace std;
-using std::chrono::milliseconds;
-
-class PoolDispatchedWithMultipleThreads: public Test {
+class PoolDispatchedWithMultipleThreads: public testing::Test {
 public:
-    vector<shared_ptr<thread>> threads;
-    shared_ptr<DummyConnectionFactory> connection_factory;
-    shared_ptr<ConnectionPool<DummyConnection>> pool;
-    ConnectionPoolStats stat;
-    condition_variable wasExecuted;
-    mutex m;
-    unsigned int count{0};
+   std::vector<std::shared_ptr<std::thread>> threads;
+   std::shared_ptr<DummyConnectionFactory> connection_factory;
+   std::shared_ptr<ConnectionPool<DummyConnection>> pool;
+   ConnectionPoolStats stat;
+   std::condition_variable wasExecuted;
+   std::mutex m;
+   unsigned int count{0};
 
-    void incrementCountAndNotify() {
-        unique_lock<mutex> lock(m);
-        ++count;
-        wasExecuted.notify_all();
-    }
+   void incrementCountAndNotify() {
+      std::unique_lock<std::mutex> lock(m);
+      ++count;
+      wasExecuted.notify_all();
+   }
 
-    void waitForCountAndFailOnTimeout(unsigned int expectedCount, 
-                                const milliseconds& time=milliseconds(500)) {
-        unique_lock<mutex> lock(m);
-        ASSERT_THAT(wasExecuted.wait_for(lock, time, [&] { return expectedCount == count; }), Eq(true));  
-    } 
-    
-    void SetUp() override {
-        connection_factory = shared_ptr<DummyConnectionFactory>(new DummyConnectionFactory());
-        pool = shared_ptr<ConnectionPool<DummyConnection>>(new ConnectionPool<DummyConnection>(200, connection_factory));	
-    }
+   void waitForCountAndFailOnTimeout(unsigned int expectedCount,
+                                     const std::chrono::milliseconds& time=std::chrono::milliseconds(500)) {
+      std::unique_lock<std::mutex> lock(m);
+      ASSERT_THAT(wasExecuted.wait_for(lock, time, [&] { return expectedCount == count; }), testing::Eq(true));
+   }
 
-    void TearDown() override {
-        for (auto& t: threads) t->join();
-    }
+   void SetUp() override {
+      connection_factory = std::make_shared<DummyConnectionFactory>();
+      pool = std::make_shared<ConnectionPool<DummyConnection>>(200, connection_factory);
+   }
+
+   void TearDown() override {
+      for (auto& t: threads) t->join();
+   }
 
 };
 
 TEST_F(PoolDispatchedWithMultipleThreads, HoldsUpUnderClientStress) {
-    unsigned int NumberOfThreads{300};
+   unsigned int NumberOfThreads{300};
 
-    for (unsigned int i{0}; i < NumberOfThreads; i++)
-          threads.push_back(
-            make_shared<thread>([&] {
-               auto conn = pool->borrow();
-               pool->release(conn);
-               incrementCountAndNotify();
-            })
-          );
+   for (unsigned int i{0}; i < NumberOfThreads; i++)
+      threads.push_back(
+         std::make_shared<std::thread>([&] {
+            auto conn = pool->borrow();
+            pool->return_connection(std::move(conn));
+            incrementCountAndNotify();
+         })
+         );
 
    waitForCountAndFailOnTimeout(NumberOfThreads);
 }
